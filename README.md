@@ -22,6 +22,31 @@ var assembleInit = require('assemble-init');
 ```
 
 ## API
+### [.initPlugin](index.js#L32)
+
+Assemble init plugin used to add templates from a source to the template cache.
+
+```js
+var assemble = require('assemble');
+var initPlugin = require('assemble-init');
+```
+
+### [init](index.js#L53)
+
+Create a stream that will initialize files for an assemble pipeline.
+
+* `options` **{Object}**: Additional options to use.    
+* `returns` **{Stream}**: Stream compatible with Assemble pipelines  
+
+```js
+var init = initPlugin(assemble);
+gulp.task('build-posts', function () {
+  gulp.src('*.hbs')
+    .pipe(init())
+    .pipe(render())
+    .pipe(gulp.dest('_gh_pages'));
+});
+```
 
 
 ## Contributing
