@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "assemble": "git://github.com/assemble/assemble#v0.6.0",
-    "assemble-render": "git://github.com/assemble/assemble-render",
+    "assemble-render": "^0.1.0",
     "gulp": "^3.8.10",
     "mocha": "*",
     "should": "*"
