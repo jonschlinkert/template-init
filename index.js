@@ -1,5 +1,5 @@
 /*!
- * assemble-init <https://github.com/assemble/assemble-init>
+ * template-init <https://github.com/assemble/template-init>
  *
  * Copyright (c) 2014 Brian Woodward, contributors.
  * Licensed under the MIT license.
@@ -18,24 +18,24 @@ var path = require('path');
 var _ = require('lodash');
 
 /**
- * Assemble init plugin used to add templates from a source to the template cache.
+ * Template init plugin used to add templates from a source to the template cache.
  *
  * ```js
- * var assemble = require('assemble');
- * var initPlugin = require('assemble-init');
+ * var app = require('assemble');
+ * var initPlugin = require('template-init');
  * ```
  *
  * @name  initPlugin
  * @api public
  */
 
-module.exports = function initPlugin (assemble) {
+module.exports = function initPlugin (app) {
 
   /**
-   * Create a stream that will initialize files for an assemble pipeline.
+   * Create a stream that will initialize files for an app pipeline.
    *
    * ```js
-   * var init = initPlugin(assemble);
+   * var init = initPlugin(app);
    * gulp.task('build-posts', function () {
    *   gulp.src('*.hbs')
    *     .pipe(init())
@@ -45,15 +45,15 @@ module.exports = function initPlugin (assemble) {
    * ```
    *
    * @param  {Object} `options` Additional options to use.
-   * @return {Stream} Stream compatible with Assemble pipelines
+   * @return {Stream} Stream compatible with Assemble, Verb, or Gulp pipelines
    * @name  init
    * @api public
    */
 
   return function init (options) {
 
-    var session = assemble.session;
-    var opts = _.extend({}, assemble.options, options);
+    var session = app.session;
+    var opts = _.extend({}, app.options, options);
 
     /**
      * Custom template loader for custom template type.
@@ -78,14 +78,14 @@ module.exports = function initPlugin (assemble) {
     if (taskName) {
       templateType = '__task__' + taskName;
       session.set('template type', templateType);
-      assemble.create(templateType, { isRenderable: true }, [loader]);
+      app.create(templateType, { isRenderable: true }, [loader]);
     }
-    var plural = assemble.collection[templateType];
+    var plural = app.collection[templateType];
 
     /**
      * Init stream used in a pipeline.
      *
-     * @param  {Object} `file` Vinyl File Object from `assemble.src`
+     * @param  {Object} `file` Vinyl File Object from `app.src`
      * @param  {Object} `enc` `file.contents` encoding.
      * @param  {Function} `cb` Callback to indicate when the transform function is complete.
      */
@@ -93,16 +93,16 @@ module.exports = function initPlugin (assemble) {
     return through.obj(function (file, enc, cb) {
 
       if (file.isStream()) {
-        var err = new gutil.PluginError('assemble-plugin:init', 'Streaming is not supported.');
+        var err = new gutil.PluginError('template-plugin:init', 'Streaming is not supported.');
         this.emit('error', err);
         return cb();
       }
 
-      // Convert vinyl file into an assemble template.
+      // Convert vinyl file into an app template.
       var template = tutils.toTemplate(file);
 
       // Add templates to template cache
-      assemble[templateType](template);
+      app[templateType](template);
 
       // let the stream know we're done
       cb();
@@ -110,12 +110,12 @@ module.exports = function initPlugin (assemble) {
       // push all the templates on the current templateType cache into the stream
       // this lets other plugins do processing on the templates before rendering.
       var stream = this;
-      tutils.stream.pushToStream(assemble.views[plural], stream);
+      tutils.stream.pushToStream(app.views[plural], stream);
 
       // if the current templatetype is not `page` (e.g. dynamically created)
       // push the pages collection through the stream
       if (templateType !== 'page') {
-        tutils.stream.pushToStream(assemble.views.pages, stream);
+        tutils.stream.pushToStream(app.views.pages, stream);
       }
 
       cb();

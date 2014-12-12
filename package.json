@@ -1,22 +1,22 @@
 {
-  "name": "assemble-init",
-  "description": "Plugin for initializing an assemble pipeline.",
+  "name": "template-init",
+  "description": "Plugin for adding vinyl files from an assemble, verb, or gulp pipeline to a template cache.",
   "version": "0.1.0",
-  "homepage": "https://github.com/assemble/assemble-init",
+  "homepage": "https://github.com/assemble/template-init",
   "author": {
     "name": "Brian Woodward",
     "url": "https://github.com/doowb"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/assemble/assemble-init.git"
+    "url": "git://github.com/assemble/template-init.git"
   },
   "bugs": {
-    "url": "https://github.com/assemble/assemble-init/issues"
+    "url": "https://github.com/assemble/template-init/issues"
   },
   "license": {
     "type": "MIT",
-    "url": "https://github.com/assemble/assemble-init/blob/master/LICENSE-MIT"
+    "url": "https://github.com/assemble/template-init/blob/master/LICENSE-MIT"
   },
   "main": "index.js",
   "engines": {
@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "assemble": "git://github.com/assemble/assemble#v0.6.0",
-    "assemble-render": "^0.1.0",
+    "template-render": "^0.1.0",
     "gulp": "^3.8.10",
     "mocha": "*",
     "should": "*"
