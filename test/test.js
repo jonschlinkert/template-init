@@ -4,10 +4,10 @@ var should = require('should');
 var through = require('through2');
 var assemble = require('assemble');
 var gulp = require('gulp');
-var render = require('assemble-render')(assemble);
+var render = require('template-render')(assemble);
 var init = require('../')(assemble);
 
-describe('assemble-init', function () {
+describe('template-init', function () {
   it('should init files from gulp.src', function (done) {
     var stream = gulp.src('test/fixtures/*.hbs')
       .pipe(init());
