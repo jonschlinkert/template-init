@@ -109,15 +109,7 @@ module.exports = function initPlugin (app) {
     }, function (cb) {
       // push all the templates on the current templateType cache into the stream
       // this lets other plugins do processing on the templates before rendering.
-      var stream = this;
-      tutils.stream.pushToStream(app.views[plural], stream);
-
-      // if the current templatetype is not `page` (e.g. dynamically created)
-      // push the pages collection through the stream
-      if (templateType !== 'page') {
-        tutils.stream.pushToStream(app.views.pages, stream);
-      }
-
+      tutils.stream.pushToStream(app.views[plural], this);
       cb();
     });
   };
