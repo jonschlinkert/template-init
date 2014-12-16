@@ -90,7 +90,7 @@ module.exports = function initPlugin (app) {
      * @param  {Function} `cb` Callback to indicate when the transform function is complete.
      */
 
-    return through.obj(function (file, enc, cb) {
+    var stream = through.obj(function (file, enc, cb) {
 
       if (file.isStream()) {
         var err = new gutil.PluginError('template-plugin:init', 'Streaming is not supported.');
@@ -112,5 +112,9 @@ module.exports = function initPlugin (app) {
       tutils.stream.pushToStream(app.views[plural], this);
       cb();
     });
+
+    // bind the stream to the session context to ensure context is available inside the stream.
+    app.session.bindEmitter(stream);
+    return stream;
   };
 };

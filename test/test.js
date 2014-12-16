@@ -4,10 +4,19 @@ var should = require('should');
 var through = require('through2');
 var assemble = require('assemble');
 var gulp = require('gulp');
-var render = require('template-render')(assemble);
-var init = require('../')(assemble);
+var Render = require('template-render');
+var Init = require('../');
 
 describe('template-init', function () {
+  var inst = null;
+  var render = null;
+  var init = null;
+  beforeEach(function () {
+    inst = assemble.init();
+    render = Render(inst);
+    init = Init(inst);
+  });
+
   it('should init files from gulp.src', function (done) {
     var stream = gulp.src('test/fixtures/*.hbs')
       .pipe(init());
@@ -20,7 +29,7 @@ describe('template-init', function () {
   });
 
   it('should init files from gulp.src and assemble.pages', function (done) {
-    assemble.pages({
+    inst.pages({
       one: { path: 'one.hbs', content: '---\nmsg: hello one\n---\n1: {{ msg }}' },
       two: { path: 'two.hbs', content: '---\nmsg: hello two\n---\n2: {{ msg }}' },
       three: { path: 'three.hbs', content: '---\nmsg: hello three\n---\n3: {{ msg }}' },
@@ -52,5 +61,47 @@ describe('template-init', function () {
         count.should.eql(5);
         done();
       });
+  });
+
+  it('should create a `files` object on the `app`', function (done) {
+    inst.task('test', function () {
+      return gulp.src('test/fixtures/*.hbs')
+        .pipe(init())
+        .on('end', function () {
+          inst.views.should.have.property('__task__tests');
+          Object.keys(inst.views['__task__tests']).length.should.eql(1);
+          Object.keys(inst.files).length.should.eql(1);
+          inst.files.should.eql(inst.views['__task__tests']);
+        });
+    });
+    inst.task('default', ['test'], function () { done(); });
+    inst.run('default');
+  });
+
+  it('should create a unique `files` object for each task', function (done) {
+    inst.task('test-a', function (done) {
+      return gulp.src('test/fixtures/*.hbs')
+        .pipe(init())
+        .on('end', function () {
+          inst.views.should.have.property('__task__test-as');
+          Object.keys(inst.views['__task__test-as']).length.should.eql(1);
+          Object.keys(inst.files).length.should.eql(1);
+          inst.files.should.eql(inst.views['__task__test-as']);
+        });
+    });
+
+    inst.task('test-b',  function () {
+      return gulp.src('test/fixtures/*.hbs')
+        .pipe(init())
+        .on('end', function () {
+          inst.views.should.have.property('__task__test-bs');
+          Object.keys(inst.views['__task__test-bs']).length.should.eql(1);
+          Object.keys(inst.files).length.should.eql(1);
+          inst.files.should.eql(inst.views['__task__test-bs']);
+        });
+    });
+
+    inst.task('default', ['test-a', 'test-b'], function () { done(); });
+    inst.run('default');
   });
 });
