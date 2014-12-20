@@ -1,10 +1,10 @@
 'use strict';
 
 var should = require('should');
-var through = require('through2');
 var assemble = require('assemble');
 var gulp = require('gulp');
 var Render = require('template-render');
+var through = require('through2');
 var Init = require('../');
 
 describe('template-init', function () {
