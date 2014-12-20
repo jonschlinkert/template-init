@@ -62,7 +62,7 @@ module.exports = function initPlugin (app, config) {
     }, function (cb) {
       // push all the templates on the current templateType cache into the stream
       // this lets other plugins do processing on the templates before rendering.
-      tutils.stream.pushToStream(app.views[plural], this);
+      tutils.pushToStream(app.views[plural], this);
       cb();
     });
 
