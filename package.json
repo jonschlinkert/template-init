@@ -26,7 +26,7 @@
     "test": "mocha -R spec"
   },
   "dependencies": {
-    "base-file-loader": "^0.1.1",
+    "base-file-loader": "^1.0.0",
     "extend-shallow": "^0.2.0",
     "gulp-util": "^3.0.1",
     "template-utils": "^0.3.0",
