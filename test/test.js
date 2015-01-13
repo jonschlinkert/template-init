@@ -28,6 +28,20 @@ describe('template-init', function () {
       .on('end', done);
   });
 
+  it('should use renameKey from app.options', function (done) {
+    inst.option('renameKey', function (fp) {
+      return fp;
+    });
+
+    var stream = gulp.src('test/fixtures/*.hbs')
+      .pipe(init());
+    stream.on('data', function(file) {
+      inst.views.pages.should.have.property[file.path];
+    })
+    .on('error', done)
+    .on('end', done);
+  });
+
   it('should init files from gulp.src and assemble.pages', function (done) {
     inst.pages({
       one: { path: 'one.hbs', content: '---\nmsg: hello one\n---\n1: {{ msg }}' },
@@ -72,6 +86,21 @@ describe('template-init', function () {
           Object.keys(inst.views['__task__tests']).length.should.eql(1);
           Object.keys(inst.files).length.should.eql(1);
           inst.files.should.eql(inst.views['__task__tests']);
+        });
+    });
+    inst.task('default', ['test'], function () { done(); });
+    inst.run('default');
+  });
+
+  it('should use renameKey from app.options when in a task', function (done) {
+    inst.option('renameKey', function (fp) {
+      return fp;
+    });
+    inst.task('test', function () {
+      return gulp.src('test/fixtures/*.hbs')
+        .pipe(init())
+        .on('data', function (file) {
+          inst.files[file.path].should.exist;
         });
     });
     inst.task('default', ['test'], function () { done(); });

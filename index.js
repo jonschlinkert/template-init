@@ -57,7 +57,7 @@ module.exports = function initPlugin (app, config) {
       }
 
       // Convert vinyl file to templates and add to cache
-      app[templateType](tutils.toTemplate(file));
+      app[templateType](tutils.toTemplate(file), opts);
       cb();
     }, function (cb) {
       // push all the templates on the current templateType cache into the stream
