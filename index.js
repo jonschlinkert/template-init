@@ -8,17 +8,6 @@
 'use strict';
 
 /**
- * Module dependencies.
- */
-
-var loader = require('base-file-loader');
-var extend = require('extend-shallow');
-var tutils = require('template-utils');
-var through = require('through2');
-var gutil = require('gulp-util');
-var path = require('path');
-
-/**
  * Template init plugin used to add templates from a source to the template cache.
  *
  * ```js
@@ -31,34 +20,39 @@ var path = require('path');
  */
 
 module.exports = function initPlugin (app, config) {
-  config = extend({prefix: '__task__', name: 'task name'});
+  var tutils = require('template-utils');
+  var extend = require('extend-shallow');
+  var through = require('through2');
+  var gutil = require('gulp-util');
+
+  config = extend({prefix: '__task__', name: 'task name', templateType: 'page'});
 
   return function init (options) {
-    var session = app.session;
     var opts = extend({}, app.options, options);
-    var taskName = session.get(config.name);
-    var templateType = 'page';
-
-    // create a custom template type based on the task name to keep
-    // source templates separate from files added via `.src()`
-    if (taskName) {
-      templateType = config.prefix + taskName;
-      session.set('template type', templateType);
-      app.create(templateType, { isRenderable: true }, [loader]);
+    var methods = opts['router methods'] || [];
+    if (!methods.length) {
+      methods.push('onInit');
     }
 
-    var plural = app.collection[templateType];
+    // get the correct middleware to use
+    var middleware =  opts.onInit || require('./lib/middleware')(app, config, options);
+    var plural = app.collection[config.templateType];
 
     var stream = through.obj(function (file, enc, cb) {
-      if (file.isStream()) {
-        var err = new gutil.PluginError('template-init', 'Streaming is not supported.');
-        this.emit('error', err);
-        return cb();
-      }
+      var self = this;
 
-      // Convert vinyl file to templates and add to cache
-      app[templateType](tutils.toTemplate(file), opts);
-      cb();
+      // assign middleware for this file
+      setMiddleware(file.path, middleware, methods);
+
+      // handle middleware for this file
+      app.handle('onInit', file, function (err) {
+        if (err) {
+          self.emit('error', new gutil.PluginError('template-init', err));
+          return cb();
+        }
+        cb();
+      });
+
     }, function (cb) {
       // push all the templates on the current templateType cache into the stream
       // this lets other plugins do processing on the templates before rendering.
@@ -71,4 +65,16 @@ module.exports = function initPlugin (app, config) {
     app.session.bindEmitter(stream);
     return stream;
   };
+
+  // setup a middleware call for this file if `onInit` exists
+  function setMiddleware (path, fn, methods) {
+    var router = app.constructor.super_.Router({
+      methods: methods
+    });
+    if (router.onInit) {
+      router.onInit(path, fn);
+      app.use(router);
+    }
+  }
+
 };
