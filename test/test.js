@@ -108,7 +108,7 @@ describe('template-init', function () {
   });
 
   it('should create a unique `files` object for each task', function (done) {
-    inst.task('test-a', function (done) {
+    inst.task('test-a', function () {
       return gulp.src('test/fixtures/*.hbs')
         .pipe(init())
         .on('end', function () {
@@ -133,4 +133,82 @@ describe('template-init', function () {
     inst.task('default', ['test-a', 'test-b'], function () { done(); });
     inst.run('default');
   });
+
+  it('should pass files through without doing anything when `onInit` is false', function (done) {
+    inst.task('test-c', function () {
+      return gulp.src('test/fixtures/*.hbs')
+        .pipe(init({ onInit: false }))
+        .on('data', function (file) {
+          (file.path.indexOf('test.hbs') === -1).should.be.false;
+          file.contents.toString().should.eql('---\nmsg: hello test\n---\ntest: {{ msg }}\n');
+        })
+        .on('end', function () {
+          inst.views.should.not.have.property('__task__test-cs');
+        });
+    });
+
+    inst.task('default', ['test-c'], function () { done(); });
+    inst.run('default');
+  });
+
+  it('should use a custom `onInit` function', function (done) {
+    function onInit () {
+      return function (file, enc, cb) {
+        var content = file.contents.toString();
+        var start = content.indexOf('---');
+        var end = content.substring(start + 3).indexOf('---') + 7;
+        file.contents = new Buffer(content.substring(end));
+        this.push(file);
+        cb();
+      };
+    }
+
+    inst.task('test-d', function () {
+      return gulp.src('test/fixtures/*.hbs')
+        .pipe(init({ onInit: onInit }))
+        .on('data', function (file) {
+          (file.path.indexOf('test.hbs') === -1).should.be.false;
+          file.contents.toString().should.eql('test: {{ msg }}\n');
+        });
+    });
+
+    inst.task('default', ['test-d'], function () { done(); });
+    inst.run('default');
+  });
+
+  it('should use a custom `postInit` function', function (done) {
+    function middleware () {
+      var files = {};
+      return {
+        onInit: function () {
+          return function (file, enc, cb) {
+            var path = require('path');
+            files[path.basename(file.path, path.extname(file.path))] = file;
+            cb();
+          };
+        },
+        postInit: function () {
+          return function (cb) {
+            this.push(files);
+            cb();
+          };
+        }
+      };
+    }
+
+    var fns = middleware();
+
+    inst.task('test-e', function () {
+      return gulp.src('test/fixtures/*.hbs')
+        .pipe(init({ onInit: fns.onInit, postInit: fns.postInit }))
+        .on('data', function (data) {
+          data.should.have.property('test');
+          data.test.contents.toString().should.eql('---\nmsg: hello test\n---\ntest: {{ msg }}\n');
+        });
+    });
+
+    inst.task('default', ['test-e'], function () { done(); });
+    inst.run('default');
+  });
+
 });

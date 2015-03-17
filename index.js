@@ -20,61 +20,67 @@
  */
 
 module.exports = function initPlugin (app, config) {
-  var tutils = require('template-utils');
+  var middleware = require('./lib/middleware');
   var extend = require('extend-shallow');
   var through = require('through2');
-  var gutil = require('gulp-util');
 
-  config = extend({prefix: '__task__', name: 'task name', templateType: 'page'});
+  config = extend({
+    prefix: '__task__',
+    name: 'task name',
+    templateType: 'page'
+  });
 
   return function init (options) {
     var opts = extend({}, app.options, options);
-    var methods = opts['router methods'] || [];
-    if (!methods.length) {
-      methods.push('onInit');
+
+    var stream = null;
+    var onInit = opts.onInit;
+    var postInit = opts.postInit;
+    var transform = function () {
+      return middleware.transform.apply(middleware, arguments);
+    };
+
+    var flush = function () {
+      return middleware.flush.apply(middleware, arguments);
+    };
+
+    if (typeof onInit === 'boolean') {
+      // init is turned off, so break out
+      if (!onInit) {
+        stream = through.obj();
+        app.session.bindEmitter(stream);
+        return stream;
+      }
+    } else if (typeof onInit === 'function') {
+      transform = onInit;
+    } else {
+      // figure out if `onInit` is a route and
+      // has any handlers
+      if (app.onInit) {
+        console.log('has onInit', app.onInit);
+      }
     }
 
-    // get the correct middleware to use
-    var middleware =  opts.onInit || require('./lib/middleware')(app, config, options);
-    var plural = app.collection[config.templateType];
+    // postInit is the flush function
+    if (typeof postInit === 'boolean') {
+      if (!postInit) {
+        flush = require('./lib/flush-noop');
+      }
+    } else if (typeof postInit === 'function') {
+      flush = postInit;
+    } else {
+      // figure out if `postInit` is a route and
+      // has any handlers
+      if (app.postInit) {
+        console.log('has postInit', app.postInit);
+      }
+    }
 
-    var stream = through.obj(function (file, enc, cb) {
-      var self = this;
-
-      // assign middleware for this file
-      setMiddleware(file.path, middleware, methods);
-
-      // handle middleware for this file
-      app.handle('onInit', file, function (err) {
-        if (err) {
-          self.emit('error', new gutil.PluginError('template-init', err));
-          return cb();
-        }
-        cb();
-      });
-
-    }, function (cb) {
-      // push all the templates on the current templateType cache into the stream
-      // this lets other plugins do processing on the templates before rendering.
-      tutils.pushToStream(app.views[plural], this);
-      cb();
-    });
+    var stream = through.obj(transform(app, config, options), flush(app, config, options));
 
     // bind the stream to the session context to ensure
     // context is available inside the stream.
     app.session.bindEmitter(stream);
     return stream;
   };
-
-  // setup a middleware call for this file if `onInit` exists
-  function setMiddleware (path, fn, methods) {
-    var router = app.constructor.super_.Router({
-      methods: methods
-    });
-    if (router.onInit) {
-      router.onInit(path, fn);
-      app.use(router);
-    }
-  }
-
 };
