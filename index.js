@@ -2,6 +2,9 @@
 
 var PluginError = require('plugin-error');
 var through = require('through2');
+var init = function () {
+  return require('init-file-loader');
+};
 
 module.exports = function (app) {
   return function initPlugin() {
@@ -9,6 +12,10 @@ module.exports = function (app) {
 
     // create a template type for vinyl files and assign a loader
     if (!app.hasOwnProperty(id)) {
+      // lazy-load the init-file-loader if it's not already registered
+      if (!app.loaders.sync.hasOwnProperty('task')) {
+        app.loader('task', init());
+      }
       app.create(id, ['task']);
     }
 
