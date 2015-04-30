@@ -1,7 +1,7 @@
 {
   "name": "template-init",
   "description": "Plugin for caching vinyl files as templates in an assemble, verb, or gulp pipeline.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "homepage": "https://github.com/assemble/template-init",
   "author": {
     "name": "Brian Woodward",
@@ -29,6 +29,7 @@
     "test": "mocha"
   },
   "dependencies": {
+    "init-file-loader": "^0.1.1",
     "plugin-error": "^0.1.0",
     "through2": "^0.6.5"
   },
@@ -39,6 +40,9 @@
     "template-render": "^0.5.0"
   },
   "keywords": [
+    "init",
+    "plugin",
+    "template",
     "templateplugin"
   ]
 }
